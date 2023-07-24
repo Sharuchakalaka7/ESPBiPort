@@ -6,7 +6,7 @@ While the [Arduino UNO](https://github.com/Sharuchakalaka7/ArduinoSensors) handl
 
 ---
 
->> **Current Version: v0.0.0**
+> **Current Version: v0.0.0**
 
 The current version is aligned with the [ArduinoSensors](https://github.com/Sharuchakalaka7/ArduinoSensors) repository v0.0.0, where only the DHT11 Temperature/Humidity sensor is supported through a hard-coded program.
 
