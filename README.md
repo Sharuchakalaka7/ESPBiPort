@@ -26,7 +26,7 @@ The plan for this module includes (i) accomodate data relay for an abstract set 
 ## Installation
 
 #### Hardware Components:
-1. Complete the [ArduinoSensors Installation section](https://github.com/Sharuchakalaka7/ArduinoSensors/README.md#installation) first
+1. Complete the [ArduinoSensors Installation section](https://github.com/Sharuchakalaka7/ArduinoSensors#installation) first
 2. Ensure you can program your ESP module
    - This code was tested with the ESP-01-S module with ESP8266 chip, and a ESP-to-USB connector
    - Use a serial monitor software such as CoolTerm to configure the ESP module
