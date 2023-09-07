@@ -36,7 +36,8 @@ The plan for this module includes (i) accomodate data relay for an abstract set 
 3. Connect ESP to Arduino board after flashing the software [^2]
 
 [^1]: Do ***not*** use the `AT+IPR=9600` command for the ESP - this freezes up the ESP module and you have to reflash the firmware again
-[^2]: (Will upload diagram for ESP-01-S later)
+[^2]: Full circuit layout diagram shown below:
+![Arduino ESP-01S Circuit Layout]()
 
 #### Software Components:
 1. Download and open this repository
