@@ -5,7 +5,9 @@
 
 
 
-ArduinoSerial UNOSerial;
+ArduinoSerial &UNOSerial = getUNOSerial();
+const String endl("\n");
+const String placeholder("Breakpoint!\n");
 
 // Define config variables
 bool sendDataEnabled = false;
@@ -32,59 +34,49 @@ enum SendState
 void connectNetwork()
 {
   // Read Wi-Fi network credentials
-  const String ssid(UNOSerial.readLine());
-  const String pswd(UNOSerial.readLine());
+  String ssid, pswd;
+  UNOSerial >> ssid >> pswd;
+  UNOSerial << placeholder;
 
-  /*
   // Connect to WiFi Network
   WiFi.begin(ssid, pswd);
-  while (WiFi.status() != WL_CONNECTED)
-  {
+  do {
+    UNOSerial << "Connecting to WiFi..." << endl;  // For debugging
     delay(2000);
-    UNOSerial.println("Connecting to WiFi...");  // For debugging
-  }
+  } while (WiFi.status() != WL_CONNECTED);
 
   // Confirmation message to serial
-  Serial.print("Connected to WiFi (");
-  Serial.print(ssid);
-  UNOSerial.println(")");
-  */
+  UNOSerial << "Connected to WiFi (" << WiFi.localIP().toString() << ")" << endl;
   UNOSerial.confirm();
 }
 
 void connectWebServer()
 {
   // Read WebSocket server pathway
-  const String serverHost(UNOSerial.readLine());
-  const String serverPort(UNOSerial.readLine());
-  const String serverURL(UNOSerial.readLine());
+  String host, port, url;
+  UNOSerial >> host >> port >> url;
+  UNOSerial << placeholder;
 
-  /*
   // Initialize WebSocket connection
-  wsClient.begin(serverHost, serverPort.toInt(), serverURL);
+  wsClient.begin(host, port.toInt(), url);
   wsClient.onEvent(webSocketEventHandler);
   wsClient.setReconnectInterval(5000);
 
   // For Debugging
-  Serial.print("Connecting to Webserver (");
-  Serial.print(serverHost + ':');
-  Serial.print(serverPort);
-  Serial.print(serverURL);
-  UNOSerial.println(")");
-  */
-  UNOSerial.confirm();    // REMOVE WHEN REIMPLEMENTING WS
+  UNOSerial << "Connecting to Web server (ws://" << host << port << url << ")" << endl;
+  // UNOSerial.confirm();    // REMOVE WHEN REIMPLEMENTING WS
 }
 
 void propagateMetricMeta()
 {
   // Read metric meta information
-  String metricsCountStr(UNOSerial.readLine());
-  String measureDelayStr(UNOSerial.readLine());
+  String metricsCountStr, measureDelayStr;
+  UNOSerial >> metricsCountStr >> measureDelayStr;
 
   // Set the global variables, then propagate the metrics count
   metricsCount = metricsCountStr.toInt();
   measureDelay = measureDelayStr.toInt();
-    // wsClient.sendTXT(metricsCountStr);
+  wsClient.sendTXT(metricsCountStr);
   UNOSerial.confirm();
 }
 
@@ -93,12 +85,12 @@ void propagateMetricInfo()
   for (int i = 0; i < metricsCount; ++i)
   {
     // Read each metric name and units
-    String metricName(UNOSerial.readLine());
-    String metricUnit(UNOSerial.readLine());
+    String name, unit;
+    UNOSerial >> name >> unit;
 
     // Propagate the information
-      // wsClient.sendTXT(metricName);
-      // wsClient.sendTXT(metricUnit);
+    wsClient.sendTXT(name);
+    wsClient.sendTXT(unit);
   }
   UNOSerial.confirm();
 }
@@ -111,13 +103,15 @@ void propagateMetricInfo()
 void updateMeasurements()
 {
   UNOSerial.confirm();  // Request Arduino for updated measurements
+  String data;
 
   for (int i = 0; i < metricsCount; ++i)
   {
-    String data(UNOSerial.readLine());
-      // wsClient.sendTXT(data);
+    // String data(UNOSerial.readLine());
+    UNOSerial >> data;
+    wsClient.sendTXT(data);
   }
-    // wsClient.sendTXT("");
+  wsClient.sendTXT("");
 }
 
 
@@ -129,14 +123,14 @@ void updateMeasurements()
 
 void webSocketDisconnected()
 {
-  UNOSerial.println("WebSocket disconnected...");
+  UNOSerial << "WebSocket disconnected..." << endl;
   sendDataEnabled = false;
 }
 
 void webSocketConnected()
 {
   static bool firstConnection = true;
-  UNOSerial.println("WebSocket connected!");
+  UNOSerial << "WebSocket connected!" << endl;
   sendDataEnabled = true;
   if (firstConnection)
   {
@@ -148,12 +142,11 @@ void webSocketConnected()
 void webSocketText(uint8_t *payload, size_t length)
 {
   // Print response to debug Serial
-  UNOSerial.println("WS --> ");
-  UNOSerial.println((char*) payload);
+  UNOSerial << "WS --> " << ((char*) payload) << endl;
   // Prevent sending data from ESP until all data received
   // Convention: empty data packet signifies end of data stream
   sendDataEnabled = (length == 0);
-  if (sendDataEnabled) UNOSerial.println("");
+  if (sendDataEnabled) UNOSerial << endl;
 }
 
 
@@ -176,7 +169,7 @@ void webSocketEventHandler(WStype_t type, uint8_t *payload, size_t length)
     
     default:
       // ERROR STATE - unexpected ws message type from server
-      UNOSerial.println("ERROR: Unexpected message type from web server...");
+      UNOSerial << "ERROR: Unexpected message type from web server..." << endl;
     
   }
 }
@@ -197,10 +190,10 @@ void setup()
 void loop()
 {
   static SendState state = META;
-  // wsClient.loop();
+  wsClient.loop();
 
-  // if (wsClient.isConnected())
-  // {
+  if (wsClient.isConnected())
+  {
     switch (state)
     {
       case META:
@@ -216,5 +209,5 @@ void loop()
         delay(bufferPeriod-measureDelay);
         break;
     }
-  // }
+  }
 }
